@@ -37,10 +37,21 @@ def apply_move(state, move):
     
     return "".join(new_state), cost
 
+def reconstruct_path(parent, action, state):
+    path = []
+    moves = []
+    while state is not None:
+        path.append(state)
+        moves.append(action.get(state))
+        state = parent[state]
+    return path[::-1], moves[::-1]
+
 # Uniform Cost Search (UCS) implementation
 def ucs(init_state, goal_state):
     frontier = {0: deque([init_state])}
     best_cost = {init_state: 0}
+    parent = {init_state: None}
+    action = {}
     
     current_cost = 0
     frontier_count = 1
@@ -56,7 +67,12 @@ def ucs(init_state, goal_state):
             continue
         
         if current_state == goal_state:
-            return current_cost
+            path, moves = reconstruct_path(parent, action, current_state)
+            return {
+                "path": path,
+                "moves": moves[1:],
+                "cost": current_cost
+            }
         
         for move in valid_moves(current_state):
             new_state, move_cost = apply_move(current_state, move)
@@ -64,6 +80,8 @@ def ucs(init_state, goal_state):
             
             if new_cost < best_cost.get(new_state, float("inf")):
                 best_cost[new_state] = new_cost
+                parent[new_state] = current_state
+                action[new_state] = move
                 
                 if new_cost not in frontier:
                     frontier[new_cost] = deque()
