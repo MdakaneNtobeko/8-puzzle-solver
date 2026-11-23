@@ -49,8 +49,18 @@ def manhattan_heu(state, goal_positions):
         h += abs(r1-r2) + abs(c1-c2)
     return h
 
+def reconstruct_path(parent, action, state):
+    path = []
+    moves = []
+    while state is not None:
+        path.append(state)
+        moves.append(action.get(state))
+        state = parent[state]
+    return path[::-1], moves[::-1]
 
 def gbfs(init_state, goal_positions):
+    parent = {init_state: None}
+    action = {}
     frontier = [(manhattan_heu(init_state, goal_positions), init_state, 0)]
     visited = set()
         
@@ -63,12 +73,19 @@ def gbfs(init_state, goal_positions):
         visited.add(current_state)
         
         if current_state == goal_state:
-            return current_cost
+            path, moves = reconstruct_path(parent, action, current_state)
+            return {
+                "path": path,
+                "moves": moves[1:],
+                "cost": current_cost
+            }
         
         for move in valid_moves(current_state):
             new_state = apply_move(current_state, move)
             if new_state not in visited:
-                frontier.append((manhattan_heu(new_state, goal_positions) + current_cost, new_state, current_cost + 1))
+                parent[new_state] = current_state
+                action[new_state] = move
+                frontier.append((manhattan_heu(new_state, goal_positions), new_state, current_cost + 1))
 
 if __name__ == "__main__":
     init_state = input().strip()
