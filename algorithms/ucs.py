@@ -41,14 +41,17 @@ def apply_move(state, move):
 def reconstruct_path(parent, action, state):
     path = []
     moves = []
+
     while state is not None:
         path.append(state)
-        moves.append(action.get(state))
+
+        if parent[state] is not None:
+            moves.append(action[state])
+
         state = parent[state]
+
     return path[::-1], moves[::-1]
 
-import heapq
-import time
 
 def ucs(init_state, goal_state):
     frontier = [(0, init_state)]
