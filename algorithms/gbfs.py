@@ -1,3 +1,6 @@
+import time
+import heapq
+
 def valid_moves(state):
     empty_pos = state.index("#")
     
@@ -52,40 +55,78 @@ def manhattan_heu(state, goal_positions):
 def reconstruct_path(parent, action, state):
     path = []
     moves = []
+
     while state is not None:
         path.append(state)
-        moves.append(action.get(state))
+
+        if parent[state] is not None:
+            moves.append(action[state])
+
         state = parent[state]
+
     return path[::-1], moves[::-1]
 
-def gbfs(init_state, goal_positions):
+def gbfs(init_state, goal_state, goal_positions):
     parent = {init_state: None}
     action = {}
+    
     frontier = [(manhattan_heu(init_state, goal_positions), init_state, 0)]
-    visited = set()
+    
+    discovered = {init_state}
+    
+    nodes_expanded = 0
+    nodes_generated = 0
+    max_frontier_size = 1
+    start_time = time.perf_counter()
         
     while frontier:
-        frontier.sort(key=lambda item : (item[0], item[1]))
-        _, current_state, current_cost = frontier.pop(0)
-        
-        if current_state in visited:
-            continue
-        visited.add(current_state)
-        
+        _, current_state, current_cost = heapq.heappop(frontier)
+
+        nodes_expanded += 1
+
         if current_state == goal_state:
-            path, moves = reconstruct_path(parent, action, current_state)
+            path, moves = reconstruct_path(
+                parent, action, current_state
+            )
+
+            runtime = time.perf_counter() - start_time
+
+            assert len(path) == len(moves) + 1
+            assert current_cost == len(moves)
+
             return {
                 "path": path,
-                "moves": moves[1:],
-                "cost": current_cost
+                "moves": moves,
+                "cost": current_cost,
+                "nodes_expanded": nodes_expanded,
+                "nodes_generated": nodes_generated,
+                "max_frontier_size": max_frontier_size,
+                "runtime_ms": runtime * 1000
             }
-        
+
         for move in valid_moves(current_state):
             new_state = apply_move(current_state, move)
-            if new_state not in visited:
+            nodes_generated += 1
+
+            if new_state not in discovered:
+                discovered.add(new_state)
+
                 parent[new_state] = current_state
                 action[new_state] = move
-                frontier.append((manhattan_heu(new_state, goal_positions), new_state, current_cost + 1))
+
+                heapq.heappush(
+                    frontier,
+                    (
+                        manhattan_heu(new_state, goal_positions),
+                        new_state,
+                        current_cost + 1
+                    )
+                )
+
+                max_frontier_size = max(
+                    max_frontier_size,
+                    len(frontier)
+                )
 
 if __name__ == "__main__":
     init_state = input().strip()
@@ -93,5 +134,5 @@ if __name__ == "__main__":
     
     goal_positions = build_goal_positions(goal_state)
     
-    print(gbfs(init_state, goal_positions))    
+    print(gbfs(init_state,goal_state, goal_positions))    
     
