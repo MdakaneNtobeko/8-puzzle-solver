@@ -1,57 +1,8 @@
 import time
 import heapq
 
-def valid_moves(state):
-    empty_pos = state.index("#")
-    
-    moves = []
-    
-    if empty_pos >= 3:
-        moves.append("UP")
-    if empty_pos < 6:
-        moves.append("DOWN")
-    if empty_pos % 3 != 0:
-        moves.append("LEFT")
-    if empty_pos % 3 != 2:
-        moves.append("RIGHT")
-    
-    return moves
-
-
-def apply_move(state, move):
-    new_state = list(state)
-    empty_pos = state.index("#")
-    target = 0
-    cost = 1
-
-    if move == "UP":
-        cost = 5
-        target = empty_pos - 3
-    elif move == "DOWN":
-        target = empty_pos + 3
-    elif move == "LEFT":
-        target = empty_pos - 1
-    else:
-        target = empty_pos + 1
-        
-    new_state[empty_pos], new_state[target] = new_state[target], new_state[empty_pos]
-    
-    return "".join(new_state), cost
-
-def reconstruct_path(parent, action, state):
-    path = []
-    moves = []
-
-    while state is not None:
-        path.append(state)
-
-        if parent[state] is not None:
-            moves.append(action[state])
-
-        state = parent[state]
-
-    return path[::-1], moves[::-1]
-
+from utils.puzzle import valid_moves, apply_move, move_cost
+from utils.path import reconstruct_path
 
 def ucs(init_state, goal_state):
     frontier = [(0, init_state)]
@@ -84,7 +35,7 @@ def ucs(init_state, goal_state):
 
             return {
                 "path": path,
-                "moves": moves[1:],
+                "moves": moves,
                 "cost": current_cost,
                 "nodes_expanded": nodes_expanded,
                 "nodes_generated": nodes_generated,
@@ -93,10 +44,10 @@ def ucs(init_state, goal_state):
             }
 
         for move in valid_moves(current_state):
-            new_state, move_cost = apply_move(current_state, move)
+            new_state = apply_move(current_state, move)
 
             nodes_generated += 1
-            new_cost = current_cost + move_cost
+            new_cost = current_cost + move_cost(move, True)
 
             if new_cost < best_cost.get(new_state, float("inf")):
                 best_cost[new_state] = new_cost

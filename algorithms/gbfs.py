@@ -1,70 +1,9 @@
 import time
 import heapq
 
-def valid_moves(state):
-    empty_pos = state.index("#")
-    
-    moves = []
-    
-    if empty_pos >= 3:
-        moves.append("UP")
-    if empty_pos < 6:
-        moves.append("DOWN")
-    if empty_pos % 3 != 0:
-        moves.append("LEFT")
-    if empty_pos % 3 != 2:
-        moves.append("RIGHT")
-    
-    return moves
-
-
-def apply_move(state, move):
-    new_state = list(state)
-    empty_pos = state.index("#")
-    target = 0
-
-    if move == "UP":
-        target = empty_pos - 3
-    elif move == "DOWN":
-        target = empty_pos + 3
-    elif move == "LEFT":
-        target = empty_pos - 1
-    else:
-        target = empty_pos + 1
-        
-    new_state[empty_pos], new_state[target] = new_state[target], new_state[empty_pos]
-    
-    return "".join(new_state)
-
-def build_goal_positions(goal_state):
-    pos = {}
-    for idx, tile in enumerate(goal_state):
-        if tile != '#':
-            pos[tile] = (idx // 3, idx % 3)
-    return pos
-
-def manhattan_heu(state, goal_positions):
-    h = 0
-    for idx, tile in enumerate(state):
-        if tile == '#': continue
-        r1,c1 = idx // 3, idx % 3
-        r2,c2 = goal_positions[tile]
-        h += abs(r1-r2) + abs(c1-c2)
-    return h
-
-def reconstruct_path(parent, action, state):
-    path = []
-    moves = []
-
-    while state is not None:
-        path.append(state)
-
-        if parent[state] is not None:
-            moves.append(action[state])
-
-        state = parent[state]
-
-    return path[::-1], moves[::-1]
+from utils.puzzle import valid_moves, apply_move, move_cost
+from utils.heuristics import build_goal_positions, manhattan_heu
+from utils.path import reconstruct_path
 
 def gbfs(init_state, goal_state, goal_positions):
     parent = {init_state: None}
@@ -91,9 +30,6 @@ def gbfs(init_state, goal_state, goal_positions):
 
             runtime = time.perf_counter() - start_time
 
-            assert len(path) == len(moves) + 1
-            assert current_cost == len(moves)
-
             return {
                 "path": path,
                 "moves": moves,
@@ -119,7 +55,7 @@ def gbfs(init_state, goal_state, goal_positions):
                     (
                         manhattan_heu(new_state, goal_positions),
                         new_state,
-                        current_cost + 1
+                        current_cost + move_cost(move)
                     )
                 )
 

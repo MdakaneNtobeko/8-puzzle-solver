@@ -1,54 +1,8 @@
 from collections import deque
 import time
 
-def valid_moves(state):
-    empty_pos = state.index("#")
-    
-    moves = []
-    
-    if empty_pos >= 3:
-        moves.append("UP")
-    if empty_pos < 6:
-        moves.append("DOWN")
-    if empty_pos % 3 != 0:
-        moves.append("LEFT")
-    if empty_pos % 3 != 2:
-        moves.append("RIGHT")
-    
-    return moves
-
-
-def apply_move(state, move):
-    new_state = list(state)
-    empty_pos = state.index("#")
-    target = 0
-
-    if move == "UP":
-        target = empty_pos - 3
-    elif move == "DOWN":
-        target = empty_pos + 3
-    elif move == "LEFT":
-        target = empty_pos - 1
-    else:
-        target = empty_pos + 1
-        
-    new_state[empty_pos], new_state[target] = new_state[target], new_state[empty_pos]
-    
-    return "".join(new_state)
-
-def reconstruct_path(parent, action, state):
-    path = []
-    moves = []
-
-    while state is not None:
-        path.append(state)
-
-        if parent[state] is not None:
-            moves.append(action[state])
-
-        state = parent[state]
-
-    return path[::-1], moves[::-1]
+from utils.puzzle import valid_moves, apply_move, move_cost
+from utils.path import reconstruct_path
 
 def bfs(init_state, goal_state):
     bfs_queue = deque([(init_state, 0)])
@@ -71,7 +25,7 @@ def bfs(init_state, goal_state):
             runtime = time.perf_counter() - start_time
             return {
                 "path": path,
-                "moves": moves[1:],
+                "moves": moves,
                 "cost": current_cost,
                 "nodes_expanded": nodes_expanded,
                 "nodes_generated": nodes_generated,
@@ -87,7 +41,7 @@ def bfs(init_state, goal_state):
                 max_frontier_size = max(max_frontier_size, len(bfs_queue) + 1)
                 parent[new_state] = current_state
                 action[new_state] = move
-                bfs_queue.append((new_state, current_cost + 1))
+                bfs_queue.append((new_state, current_cost + move_cost(move)))
 
 if __name__ == "__main__":
     init_state = input().strip()
